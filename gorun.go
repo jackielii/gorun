@@ -1,12 +1,10 @@
-//
 // gorun - Script-like runner for Go source files.
 //
-//   https://wiki.ubuntu.com/gorun
+//	https://wiki.ubuntu.com/gorun
 //
 // Copyright (c) 2011 Canonical Ltd.
 //
 // Written by Gustavo Niemeyer <gustavo.niemeyer@canonical.com>
-//
 package main
 
 // This program is free software: you can redistribute it and/or modify it
@@ -129,11 +127,19 @@ func getSection(content []byte, sectionName string) (section []byte) {
 	startIdx := bytes.Index(content, []byte(start))
 	if startIdx >= 0 {
 		idxEnd := bytes.Index(content, []byte(end))
-		if idxEnd > startIdx {
-			goMod := string(content[startIdx+len(start) : idxEnd])
-			goMod = strings.ReplaceAll(goMod, "// ", "")
-			goMod = strings.ReplaceAll(goMod, "//", "")
-			return []byte(goMod)
+		if idxEnd > startIdx+len(start) {
+			lines := content[startIdx+len(start) : idxEnd]
+			var goMod []byte
+			for {
+				cr := bytes.Index(lines, []byte("\n"))
+				if cr < 0 {
+					break
+				}
+				line := bytes.TrimPrefix(lines[:cr+1], []byte("//"))
+				goMod = append(goMod, line...)
+				lines = lines[cr+1:]
+			}
+			return goMod
 		}
 	}
 	return []byte("")
